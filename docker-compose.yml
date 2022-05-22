@@ -34,3 +34,18 @@ services:
       - ./backend/index.js:/app/index.js
     ports:
       - 3000:3000
+  security:
+    build: 
+      context: ./bloqueo
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - zookeeper
+      - kafka
+    environment:
+      PORT: 5000
+      kafkaHost: kafka:9092
+    volumes:
+      - ./bloqueo/index.js:/app/index.js
+    ports:
+      - 5000:5000
