@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const { Kafka } = require('kafkajs')
+const users = require('./users')
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -21,14 +22,41 @@ app.get("/", async (req, res) => {
     await producer.send({
       topic: 'test-topic',
       messages: [
-        { value: 'Hello KafkaJS user!' },
+        { value: 'funciona el kafka' },
       ],
     })
 
 });
 
 app.post("/login", async(req,res) =>{
-  res.send("true or false")
+  //res.send("true or false")
+  const user = req.body.user;
+  const pass = req.body.pass;
+
+  var userbd = users.find((x)=> x.user == user);
+  const passbd = userbd?.pass;
+  userbd = userbd?.user;
+  var auth = false;
+
+  if(userbd == user && passbd == pass){
+    auth = true;
+    res.send(`usuario: ${user} logueado correctamente`);
+  }else{
+    res.send(`usuario incorrecto`);
+  }
+
+  await producer.send({
+    topic: "test-topic",
+    messages: [
+      {
+        value: JSON.stringify({
+          user,
+          validation: auth,
+        }),
+      },
+    ],
+  });
+  
 });
 
 app.listen(port, async() => {
