@@ -1,7 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const { Kafka } = require('kafkajs')
-const users = require('./users')
+const { Kafka } = require('kafkajs');
+const users = require('./users');
+const file = require("fs/promises");
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -10,6 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 const kafka = new Kafka({
+  waitForLeaders: true,
   brokers: ['kafka:9092']
 });
 
@@ -32,6 +34,12 @@ app.post("/login", async(req,res) =>{
   //res.send("true or false")
   const user = req.body.user;
   const pass = req.body.pass;
+  var user_blocked = await file.readFile("/blocked.json", "utf-8");
+  user_blocked = JSON.parse(user_blocked);
+
+  if(user_blocked.find((user_blocked) => user_blocked == user)){
+    res.send(`usuario ${user} esta bloqueado`);
+  }
 
   var userbd = users.find((x)=> x.user == user);
   const passbd = userbd?.pass;
@@ -51,7 +59,7 @@ app.post("/login", async(req,res) =>{
       {
         value: JSON.stringify({
           user,
-          validation: auth,
+          value: auth,
         }),
       },
     ],
